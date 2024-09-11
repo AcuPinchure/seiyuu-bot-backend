@@ -1,0 +1,24 @@
+# DB and files
+data/
+crontabLog/
+crontab_log/
+
+# django
+*.log
+*.pot
+*.pyc
+__pycache__
+settings_local.py
+
+# python
+venv/
+.venv/
+
+# vs code
+.vscode/
+
+# pi shell
+*.sh
+
+# env
+.env
