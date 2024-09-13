@@ -70,7 +70,7 @@ class Tweet(models.Model):
     class Meta:
         db_table = "core_tweet"
 
-    id = models.CharField(help_text="Tweet ID", primary_key=True)
+    id = models.CharField(help_text="Tweet ID", primary_key=True, max_length=50)
     post_time = models.DateTimeField(help_text="Tweet time", blank=True, null=True)
     data_time = models.DateTimeField(
         help_text="Data collected time", blank=True, null=True

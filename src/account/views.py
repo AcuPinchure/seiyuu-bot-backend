@@ -1,10 +1,11 @@
 from datetime import timedelta
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework.decorators import api_view, parser_classes
+from rest_framework.decorators import api_view, parser_classes, permission_classes
 from rest_framework.parsers import JSONParser
 from rest_framework import status
 from rest_framework import serializers
+from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
 
 from rest_framework_simplejwt.serializers import (
@@ -22,6 +23,31 @@ from drf_spectacular.utils import (
 )
 
 # Create your views here.
+
+
+@extend_schema(
+    responses={
+        200: OpenApiResponse(
+            description="OK",
+        ),
+        401: OpenApiResponse(
+            description="Unauthorized",
+            examples=[
+                OpenApiExample(
+                    "Example 1",
+                    value={"detail": "Authentication credentials were not provided."},
+                )
+            ],
+        ),
+    },
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def test_login(request: Request) -> Response:
+    """
+    Test if the user is authenticated
+    """
+    return Response(status=status.HTTP_200_OK)
 
 
 @extend_schema(
