@@ -22,6 +22,8 @@ from drf_spectacular.utils import (
     inline_serializer,
 )
 
+from account.serializers import UserSerializer
+
 # Create your views here.
 
 
@@ -29,6 +31,14 @@ from drf_spectacular.utils import (
     responses={
         200: OpenApiResponse(
             description="OK",
+            response=inline_serializer(
+                name="TestLoginResponse",
+                fields={
+                    "status": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "user": UserSerializer(),
+                },
+            ),
         ),
         401: OpenApiResponse(
             description="Unauthorized",
@@ -47,7 +57,16 @@ def test_login(request: Request) -> Response:
     """
     Test if the user is authenticated
     """
-    return Response(status=status.HTTP_200_OK)
+    user = request.user
+    user_serializer = UserSerializer(user)
+    return Response(
+        {
+            "status": True,
+            "message": "User is authenticated",
+            "user": user_serializer.data,
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 @extend_schema(
@@ -69,15 +88,9 @@ def test_login(request: Request) -> Response:
             response=inline_serializer(
                 name="TokenObtainPairResponse",
                 fields={
-                    "detail": "Login successful",
-                    "user": inline_serializer(
-                        name="User",
-                        fields={
-                            "id": serializers.IntegerField(),
-                            "username": serializers.CharField(),
-                            "email": serializers.EmailField(),
-                        },
-                    ),
+                    "status": serializers.BooleanField(),
+                    "message": serializers.CharField(),
+                    "user": UserSerializer(),
                 },
             ),
         ),
@@ -110,14 +123,13 @@ def login(request: Request) -> Response:
 
     validated_data = serializer.validated_data
 
+    user_serializer = UserSerializer(user)
+
     response = Response(
         {
-            "detail": "Login successful",
-            "user": {
-                "id": user.id,
-                "username": user.username,
-                "email": user.email,
-            },
+            "status": True,
+            "message": "Login successful",
+            "user": user_serializer.data,
         },
         status=status.HTTP_200_OK,
     )

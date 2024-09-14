@@ -74,20 +74,10 @@ from drf_spectacular.utils import (
                     "is_active": serializers.BooleanField(),
                     "likes": serializers.IntegerField(),
                     "avg_likes": serializers.FloatField(),
-                    "max_likes": inline_serializer(
-                        name="MaxLikes",
-                        fields={
-                            "tweet_id": serializers.CharField(),
-                        },
-                    ),
+                    "max_likes": serializers.ListField(child=serializers.CharField()),
                     "rts": serializers.IntegerField(),
                     "avg_rts": serializers.FloatField(),
-                    "max_rts": inline_serializer(
-                        name="MaxRts",
-                        fields={
-                            "tweet_id": serializers.CharField(),
-                        },
-                    ),
+                    "max_rts": serializers.ListField(child=serializers.CharField()),
                 },
             ),
         )
@@ -137,7 +127,7 @@ def get_stats(request: Request) -> Response:
         200: OpenApiResponse(
             description="Followers response",
             response=inline_serializer(
-                name="StatsResponse",
+                name="FollowerResponse",
                 fields={
                     "status": serializers.BooleanField(),
                     "data": inline_serializer(
@@ -146,6 +136,7 @@ def get_stats(request: Request) -> Response:
                             "data_time": serializers.DateTimeField(),
                             "followers": serializers.IntegerField(),
                         },
+                        many=True,
                     ),
                 },
             ),
@@ -168,8 +159,8 @@ def get_followers(request: Request) -> Response:
 
     return Response(
         {
-            "status": True,
-            "data": stats,
+            "status": stats["status"],
+            "data": stats["data"],
         },
         status=status.HTTP_200_OK,
     )
@@ -214,7 +205,7 @@ def get_service_config(request: Request) -> Response:
                 fields={
                     "status": serializers.BooleanField(),
                     "message": serializers.CharField(),
-                    "data": SeiyuuSerializer(),
+                    "data": SeiyuuSerializer,
                 },
             ),
         ),

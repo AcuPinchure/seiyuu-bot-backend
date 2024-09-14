@@ -62,7 +62,7 @@ def get_followers_from_query_options(
     seiyuu: Seiyuu,
     start_date: datetime,  # tz aware
     end_date: datetime,  # tz aware
-) -> list[dict]:
+) -> dict:
 
     follower_query = Followers.objects.filter(
         seiyuu=seiyuu, data_time__gte=start_date, data_time__lte=end_date
