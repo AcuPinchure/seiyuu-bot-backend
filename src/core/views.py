@@ -96,7 +96,6 @@ def get_stats(request: Request) -> Response:
     end_date = serializer.validated_data["end_date"]
 
     stats = get_stats_from_query_options(seiyuu, start_date, end_date)
-    stats["status"] = True
 
     return Response(stats, status=status.HTTP_200_OK)
 
@@ -199,13 +198,13 @@ def get_service_config(request: Request) -> Response:
     request=OpenApiRequest(request=SeiyuuSerializer, encoding="application/json"),
     responses={
         200: OpenApiResponse(
-            description="Service status response",
+            description="Service status update response",
             response=inline_serializer(
-                name="SeiyuuResponse",
+                name="SeiyuuUpdateResponse",
                 fields={
                     "status": serializers.BooleanField(),
                     "message": serializers.CharField(),
-                    "data": SeiyuuSerializer,
+                    "data": SeiyuuSerializer(),
                 },
             ),
         ),

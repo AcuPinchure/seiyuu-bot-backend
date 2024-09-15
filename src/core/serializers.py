@@ -4,6 +4,18 @@ from django.db.models import Sum
 
 
 class SeiyuuSerializer(serializers.ModelSerializer):
+
+    last_post = serializers.SerializerMethodField()
+
+    def get_last_post(self, obj):
+        if not Tweet.objects.filter(media__seiyuu=obj).exists():
+            return "No data"
+        return (
+            Tweet.objects.filter(media__seiyuu=obj)
+            .latest("post_time")
+            .post_time.isoformat()
+        )
+
     class Meta:
         model = Seiyuu
         fields = [
@@ -13,12 +25,14 @@ class SeiyuuSerializer(serializers.ModelSerializer):
             "id_name",
             "activated",
             "interval",
+            "last_post",
         ]
         read_only_fields = [
             "id",
             "name",
             "screen_name",
             "id_name",
+            "last_post",
         ]
 
 

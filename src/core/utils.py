@@ -18,13 +18,22 @@ def get_stats_from_query_options(
         data_time__isnull=False,
     ).order_by("data_time")
 
-    if not tweet_query:
-        return {"status": False, "message": "No tweets found in the given interval"}
-
     tweet_count = tweet_query.count()
+
+    if tweet_count == 0:
+        return {
+            "status": False,
+            "message": "No tweets found in the given interval",
+        }
+
     interval = (
         tweet_query.last().post_time - tweet_query.first().post_time
     ) / timedelta(hours=1)
+
+    if tweet_count == 1:
+        actual_interval = 0
+    else:
+        actual_interval = interval / (tweet_count - 1)
 
     like_count = tweet_query.aggregate(sum_likes=Sum("like"))["sum_likes"] or 0
     avg_likes = tweet_query.aggregate(avg_likes=Avg("like"))["avg_likes"] or 0
@@ -47,7 +56,7 @@ def get_stats_from_query_options(
         "interval": interval,
         "posts": tweet_count,
         "scheduled_interval": seiyuu.interval,
-        "actual_interval": interval / (tweet_count - 1),
+        "actual_interval": actual_interval,
         "is_active": seiyuu.activated,
         "likes": like_count,
         "avg_likes": avg_likes,
@@ -72,6 +81,7 @@ def get_followers_from_query_options(
         return {
             "status": False,
             "message": "No followers found in the given interval",
+            "data": [],
         }
 
     # get real start and end date
