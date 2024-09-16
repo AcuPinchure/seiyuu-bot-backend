@@ -37,17 +37,17 @@ class SeiyuuSerializer(serializers.ModelSerializer):
 
 
 class MediaSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField()
-    file_type = serializers.CharField()
-    total_weight = serializers.SerializerMethodField()
-    seiyuu_name = serializers.CharField(source="seiyuu.name")
-    seiyuu_screen_name = serializers.CharField(source="seiyuu.screen_name")
-    seiyuu_id_name = serializers.CharField(source="seiyuu.id_name")
-    posts = serializers.IntegerField()
-    likes = serializers.IntegerField()
-    rts = serializers.IntegerField()
+    total_weight = serializers.SerializerMethodField(read_only=True)
+    seiyuu_name = serializers.CharField(source="seiyuu.name", read_only=True)
+    seiyuu_screen_name = serializers.CharField(
+        source="seiyuu.screen_name", read_only=True
+    )
+    seiyuu_id_name = serializers.CharField(source="seiyuu.id_name", read_only=True)
+    posts = serializers.IntegerField(read_only=True)
+    likes = serializers.IntegerField(read_only=True)
+    rts = serializers.IntegerField(read_only=True)
 
-    def get_total_weight(self, obj):
+    def get_total_weight(self, obj) -> int:
         return Media.objects.filter(seiyuu=obj.seiyuu).aggregate(Sum("weight"))[
             "weight__sum"
         ]
@@ -88,11 +88,10 @@ class StatsQuerySerializer(serializers.Serializer):
 
 
 class TweetSerializer(serializers.ModelSerializer):
-    id = serializers.CharField()
 
     followers = serializers.SerializerMethodField()
 
-    def get_followers(self, obj):
+    def get_followers(self, obj) -> int | str:
         if not Followers.objects.filter(
             data_time__lte=obj.post_time, seiyuu=obj.media.seiyuu
         ).exists():
@@ -115,7 +114,6 @@ class TweetSerializer(serializers.ModelSerializer):
             "rt",
             "reply",
             "quote",
-            "media",
             "followers",
         ]
         read_only_fields = [
@@ -126,6 +124,5 @@ class TweetSerializer(serializers.ModelSerializer):
             "rt",
             "reply",
             "quote",
-            "media",
             "followers",
         ]

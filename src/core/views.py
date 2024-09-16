@@ -317,12 +317,14 @@ def update_service_config(request: Request, id_name) -> Response:
         OpenApiParameter(
             name="order_by",
             type=str,
+            enum=["date", "likes", "rts", "posts"],
             location=OpenApiParameter.QUERY,
             description="order by, default is date, options: date, likes, rts, posts",
         ),
         OpenApiParameter(
             name="order",
             type=str,
+            enum=["asc", "desc"],
             location=OpenApiParameter.QUERY,
             description="order, default is desc, options: asc, desc",
         ),
@@ -333,10 +335,13 @@ def update_service_config(request: Request, id_name) -> Response:
             response=inline_serializer(
                 name="ImagesResponse",
                 fields={
+                    "status": serializers.BooleanField(),
                     "count": serializers.IntegerField(),
                     "total_pages": serializers.IntegerField(),
-                    "sort_by": serializers.CharField(),
-                    "order": serializers.CharField(),
+                    "sort_by": serializers.ChoiceField(
+                        choices=["date", "likes", "rts", "posts"]
+                    ),
+                    "order": serializers.ChoiceField(choices=["asc", "desc"]),
                     "page": serializers.IntegerField(),
                     "data": MediaSerializer(many=True),
                 },
@@ -511,6 +516,21 @@ def list_images(request: Request) -> Response:
     """
 
     image_query = Media.objects.raw(raw_query_command_with_order)
+
+    if not image_query:
+        return Response(
+            {
+                "status": False,
+                "message": "No images found",
+                "count": 0,
+                "total_pages": 1,
+                "sort_by": sort_by,
+                "order": order,
+                "page": 1,
+                "data": [],
+            },
+            status=status.HTTP_200_OK,
+        )
 
     page = request.query_params.get("page", None)
 

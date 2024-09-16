@@ -103,6 +103,9 @@ TEMPLATES = [
     },
 ]
 
+MEDIA_ROOT = BASE_DIR / "data" / "media" / "Library"
+MEDIA_URL = "/file/"
+
 WSGI_APPLICATION = "lovelive_seiyuu_bot_backend.wsgi.application"
 
 
