@@ -454,7 +454,7 @@ def list_images(request: Request) -> Response:
                     MAX(post_time) AS post_time
                 FROM core_tweet
                 GROUP BY media_id
-            )AS tweet_latest_time ON core_media.id = tweet_latest_time.media_id
+            ) AS tweet_latest_time ON core_media.id = tweet_latest_time.media_id
             JOIN
             (
                 SELECT
