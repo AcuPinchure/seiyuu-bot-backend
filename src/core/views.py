@@ -64,6 +64,7 @@ from drf_spectacular.utils import (
             response=inline_serializer(
                 name="StatsResponse",
                 fields={
+                    "seiyuu_id": serializers.IntegerField(),
                     "status": serializers.BooleanField(),
                     "start_date": serializers.DateTimeField(),
                     "end_date": serializers.DateTimeField(),

@@ -51,6 +51,7 @@ def get_stats_from_query_options(
 
     return {
         "status": True,
+        "seiyuu_id": seiyuu.id,
         "start_date": tweet_query.first().post_time.isoformat(),
         "end_date": tweet_query.last().post_time.isoformat(),
         "interval": interval,
