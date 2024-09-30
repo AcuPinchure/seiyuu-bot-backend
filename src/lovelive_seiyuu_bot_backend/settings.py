@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "account",
     "core",
+    "logs",
 ]
 
 MIDDLEWARE = [
@@ -105,6 +106,10 @@ TEMPLATES = [
 
 MEDIA_ROOT = BASE_DIR / "data" / "media" / "Library"
 MEDIA_URL = "/file/"
+
+BACKEND_LOG_ROOT = BASE_DIR / "data" / "crontab_log"
+
+CRAWLER_LOG_ROOT = BASE_DIR / "data" / "crawler_log"
 
 WSGI_APPLICATION = "lovelive_seiyuu_bot_backend.wsgi.application"
 
