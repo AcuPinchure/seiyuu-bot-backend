@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  seiyuu-bot-backend:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"  # Only expose to localhost for nginx proxy
+    volumes:
+      - ./src:/app/src
+      - ./data/crontab_log:/app/data/crontab_log
+      - ./data/media:/app/data/media
+    depends_on:
+      - seiyuu-bot-postgres
+    env_file:
+      - .env
+    networks:
+      - seiyuu-bot-network
+
+  seiyuu-bot-postgres:
+    image: postgres:15
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./data/postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - seiyuu-bot-network
+
+networks:
+  seiyuu-bot-network:
+    driver: bridge

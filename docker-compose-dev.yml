@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  seiyuu-bot-postgres:
+    image: postgres:15
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - ./data/postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - seiyuu-bot-network
+
+networks:
+  seiyuu-bot-network:
+    driver: bridge

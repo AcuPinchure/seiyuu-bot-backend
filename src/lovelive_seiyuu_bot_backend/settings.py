@@ -30,6 +30,11 @@ required_env_vars = [
     "AUTH_COOKIE_DOMAIN",
     "AUTH_COOKIE_SECURE",
     "AUTH_COOKIE_SAMESITE",
+    "POSTGRES_DB",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "POSTGRES_HOST",
+    "POSTGRES_PORT",
 ]
 
 missing_env_vars = [
@@ -119,8 +124,12 @@ WSGI_APPLICATION = "lovelive_seiyuu_bot_backend.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "data" / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB"),
+        "USER": os.getenv("POSTGRES_USER"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+        "HOST": os.getenv("POSTGRES_HOST"),
+        "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
 

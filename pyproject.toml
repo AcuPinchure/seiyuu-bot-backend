@@ -1,23 +1,22 @@
-[tool.poetry]
+[project]
 name = "lovelive-seiyuu-bot-backend"
 version = "0.1.0"
 description = "The backend service of Lovelive Seiyuu Bot"
-authors = ["AcuPinchure <s920069168@gmail.com>"]
-license = "MIT"
+authors = [
+    {name = "AcuPinchure", email = "s920069168@gmail.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-django = "^4.2"
-djangorestframework = "^3.15.2"
-django-cors-headers = "^4.4.0"
-requests = "^2.32.3"
-python-dotenv = "^1.0.1"
-djangorestframework-simplejwt = "^5.3.1"
-drf-spectacular = "^0.27.2"
-tweepy = "^4.14.0"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.10"
+dependencies = [
+    "django>=4.2,<5.0",
+    "djangorestframework>=3.15.2,<4.0",
+    "django-cors-headers>=4.4.0,<5.0",
+    "requests>=2.32.3,<3.0",
+    "python-dotenv>=1.0.1,<2.0",
+    "djangorestframework-simplejwt>=5.3.1,<6.0",
+    "drf-spectacular>=0.27.2,<1.0",
+    "tweepy>=4.14.0,<5.0",
+    "psycopg2>=2.9.10",
+    "whitenoise>=6.9.0",
+]
