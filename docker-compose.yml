@@ -4,11 +4,12 @@ services:
   seiyuu-bot-backend:
     build: .
     ports:
-      - "127.0.0.1:8000:8000"  # Only expose to localhost for nginx proxy
+      - "127.0.0.1:8000:8000" # Only expose to localhost for nginx proxy
     volumes:
       - ./src:/app/src
       - ./data/crontab_log:/app/data/crontab_log
       - ./data/media:/app/data/media
+      - ./data/twitter_credentials.json:/app/data/twitter_credentials.json:ro
     depends_on:
       - seiyuu-bot-postgres
     env_file:
