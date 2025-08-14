@@ -6,7 +6,7 @@ from drf_spectacular.utils import (
     inline_serializer,
 )
 from rest_framework import serializers
-from .serializers import ImportLogSerializer, LogSerializer
+from .serializers import ImportLogSerializer, LogSerializer, LogListItemSerializer
 
 
 def import_log_schema():
@@ -88,7 +88,7 @@ def list_log_schema():
                 name="keyword",
                 type=str,
                 location=OpenApiParameter.QUERY,
-                description="Keyword to search in content",
+                description="Keyword to search in content and file_name. When provided, matching text will be highlighted in the preview field",
                 required=False,
             ),
             OpenApiParameter(
@@ -105,8 +105,11 @@ def list_log_schema():
                 response=inline_serializer(
                     name="LogListResponse",
                     fields={
-                        "status": serializers.BooleanField(),
-                        "data": serializers.ListField(),
+                        "id": serializers.CharField(help_text="Document ID (MD5 hash of log_time)"),
+                        "type": serializers.ChoiceField(choices=["post", "data"], help_text="Log type"),
+                        "log_time": serializers.DateTimeField(help_text="Log timestamp"),
+                        "file_name": serializers.CharField(help_text="Name of the log file"),
+                        "preview": serializers.CharField(help_text="Preview text: highlighted matches when keyword is provided, or first 100 chars of content otherwise"),
                     },
                 ),
             ),

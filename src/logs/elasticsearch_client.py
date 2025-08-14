@@ -107,6 +107,7 @@ class LogsElasticsearchClient:
 
             source = response["_source"]
             return {
+                "id": doc_id,
                 "type": log_type,
                 "log_time": self._convert_es_datetime_to_datetime(source["log_time"]),
                 "file_name": source["file_name"],
@@ -124,7 +125,7 @@ class LogsElasticsearchClient:
         max_date: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
-        List log documents with optional filtering
+        List log documents with optional filtering and highlighting
 
         Args:
             log_type: 'post' or 'data'
@@ -134,7 +135,7 @@ class LogsElasticsearchClient:
             max_date: maximum date filter (yyyy-mm-dd)
 
         Returns:
-            List of log documents
+            List of log documents with id and preview
         """
         index_name = self._get_index_name(log_type)
 
@@ -169,34 +170,78 @@ class LogsElasticsearchClient:
         size = self.PAGE_SIZE
         from_offset = (page - 1) * size
 
+        # Build search body
+        search_body = {
+            "query": query,
+            "from": from_offset,
+            "size": size,
+            "sort": [{"log_time": {"order": "desc"}}],
+            "_source": ["log_time", "file_name", "content"],  # Include content in response
+        }
+
+        # Add highlight configuration if keyword exists
+        if keyword:
+            search_body["highlight"] = {
+                "fields": {
+                    "content": {
+                        "fragment_size": 150,
+                        "number_of_fragments": 1,
+                        "pre_tags": ["<mark>"],
+                        "post_tags": ["</mark>"],
+                    },
+                    "file_name": {
+                        "fragment_size": 150,
+                        "number_of_fragments": 1,
+                        "pre_tags": ["<mark>"],
+                        "post_tags": ["</mark>"],
+                    }
+                }
+            }
+
         print(query)
 
         try:
             response = self.client.search(
                 index=index_name,
-                body={
-                    "query": query,
-                    "from": from_offset,
-                    "size": size,
-                    "sort": [{"log_time": {"order": "desc"}}],
-                },
+                body=search_body,
             )
 
             results = []
             for hit in response["hits"]["hits"]:
                 source = hit["_source"]
+                
+                # Extract preview
+                preview = ""
+                if keyword and "highlight" in hit:
+                    # Prefer content highlights over file_name highlights when keyword exists
+                    if "content" in hit["highlight"]:
+                        preview = hit["highlight"]["content"][0]
+                    elif "file_name" in hit["highlight"]:
+                        preview = hit["highlight"]["file_name"][0]
+                else:
+                    # No keyword provided, use first 100 chars of content as preview
+                    content = source.get("content", "")
+                    if content:
+                        # Take first 100 characters and add ellipsis if truncated
+                        preview = content[:100]
+                        if len(content) > 100:
+                            preview += "..."
+                
                 results.append(
                     {
+                        "id": hit["_id"],
                         "type": log_type,
                         "log_time": self._convert_es_datetime_to_datetime(
                             source["log_time"]
                         ),
                         "file_name": source["file_name"],
+                        "preview": preview,
                     }
                 )
 
             return results
-        except Exception:
+        except Exception as e:
+            print(f"Error searching logs: {e}")
             return []
 
 
