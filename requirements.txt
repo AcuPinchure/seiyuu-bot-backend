@@ -9,6 +9,8 @@ django-cors-headers==4.7.0
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.5.1
 drf-spectacular==0.28.0
+elastic-transport==8.17.1
+elasticsearch==8.17.0
 idna==3.10
 inflection==0.5.1
 jsonschema==4.25.0
