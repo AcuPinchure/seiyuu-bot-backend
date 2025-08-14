@@ -51,6 +51,7 @@ services:
       - node.name=seiyuu-bot-elastic
       - cluster.name=seiyuu-bot-elastic
       - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - cluster.initial_master_nodes=seiyuu-bot-elastic
       - bootstrap.memory_lock=true
       - xpack.security.enabled=true
       - xpack.security.http.ssl.enabled=true
@@ -75,8 +76,8 @@ services:
         soft: -1
         hard: -1
       nofile:
-        soft: 65536
-        hard: 65536
+        soft: 262144
+        hard: 262144
     deploy:
       resources:
         limits:
