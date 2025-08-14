@@ -4,8 +4,12 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import serializers
 from django.db.models import Avg, Count, Sum, Max
+
+import math
+
+from django.utils import timezone
+from datetime import datetime, timedelta
 
 from core.paginators import StandardResultsSetPagination
 
@@ -17,73 +21,24 @@ from .serializers import (
     TweetSerializer,
 )
 from .utils import get_stats_from_query_options, get_followers_from_query_options
-
-import math
-
-from django.utils import timezone
-from datetime import datetime, timedelta
-
-from drf_spectacular.utils import (
-    extend_schema,
-    OpenApiExample,
-    OpenApiRequest,
-    OpenApiResponse,
-    inline_serializer,
-    OpenApiParameter,
+from .swagger import (
+    get_status_schema,
+    get_followers_schema,
+    get_service_config_schema,
+    update_service_config_schema,
+    list_images_schema,
+    list_image_tweets_schema,
+    update_image_weight_schema,
+    get_no_data_tweets_schema,
+    update_tweet_data_schema,
+    set_followers_schema,
 )
 
 
 # Create your views here.
 
 
-@extend_schema(
-    tags=["Stats"],
-    parameters=[
-        OpenApiParameter(
-            name="seiyuu",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Seiyuu id",
-        ),
-        OpenApiParameter(
-            name="start_date",
-            type=str,
-            location=OpenApiParameter.QUERY,
-            description="Start date in iso format",
-        ),
-        OpenApiParameter(
-            name="end_date",
-            type=str,
-            location=OpenApiParameter.QUERY,
-            description="End date in iso format",
-        ),
-    ],
-    responses={
-        200: OpenApiResponse(
-            description="Stats response",
-            response=inline_serializer(
-                name="StatsResponse",
-                fields={
-                    "seiyuu_id": serializers.IntegerField(),
-                    "status": serializers.BooleanField(),
-                    "start_date": serializers.DateTimeField(),
-                    "end_date": serializers.DateTimeField(),
-                    "interval": serializers.FloatField(),
-                    "posts": serializers.IntegerField(),
-                    "scheduled_interval": serializers.IntegerField(),
-                    "actual_interval": serializers.FloatField(),
-                    "is_active": serializers.BooleanField(),
-                    "likes": serializers.IntegerField(),
-                    "avg_likes": serializers.FloatField(),
-                    "max_likes": serializers.ListField(child=serializers.CharField()),
-                    "rts": serializers.IntegerField(),
-                    "avg_rts": serializers.FloatField(),
-                    "max_rts": serializers.ListField(child=serializers.CharField()),
-                },
-            ),
-        )
-    },
-)
+@get_status_schema()
 @api_view(["GET"])
 def get_stats(request: Request) -> Response:
     """
@@ -101,48 +56,7 @@ def get_stats(request: Request) -> Response:
     return Response(stats, status=status.HTTP_200_OK)
 
 
-@extend_schema(
-    tags=["Stats"],
-    parameters=[
-        OpenApiParameter(
-            name="seiyuu",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Seiyuu id",
-        ),
-        OpenApiParameter(
-            name="start_date",
-            type=str,
-            location=OpenApiParameter.QUERY,
-            description="Start date in iso format",
-        ),
-        OpenApiParameter(
-            name="end_date",
-            type=str,
-            location=OpenApiParameter.QUERY,
-            description="End date in iso format",
-        ),
-    ],
-    responses={
-        200: OpenApiResponse(
-            description="Followers response",
-            response=inline_serializer(
-                name="FollowerResponse",
-                fields={
-                    "status": serializers.BooleanField(),
-                    "data": inline_serializer(
-                        name="Followers",
-                        fields={
-                            "data_time": serializers.DateTimeField(),
-                            "followers": serializers.IntegerField(),
-                        },
-                        many=True,
-                    ),
-                },
-            ),
-        ),
-    },
-)
+@get_followers_schema()
 @api_view(["GET"])
 def get_followers(request: Request) -> Response:
     """
@@ -166,21 +80,7 @@ def get_followers(request: Request) -> Response:
     )
 
 
-@extend_schema(
-    tags=["Seiyuu"],
-    responses={
-        200: OpenApiResponse(
-            description="Service status response",
-            response=inline_serializer(
-                name="SeiyuuResponse",
-                fields={
-                    "status": serializers.BooleanField(),
-                    "data": SeiyuuSerializer(many=True),
-                },
-            ),
-        )
-    },
-)
+@get_service_config_schema()
 @api_view(["GET"])
 def get_service_config(request: Request) -> Response:
     """
@@ -194,23 +94,7 @@ def get_service_config(request: Request) -> Response:
     )
 
 
-@extend_schema(
-    tags=["Seiyuu"],
-    request=OpenApiRequest(request=SeiyuuSerializer, encoding="application/json"),
-    responses={
-        200: OpenApiResponse(
-            description="Service status update response",
-            response=inline_serializer(
-                name="SeiyuuUpdateResponse",
-                fields={
-                    "status": serializers.BooleanField(),
-                    "message": serializers.CharField(),
-                    "data": SeiyuuSerializer(),
-                },
-            ),
-        ),
-    },
-)
+@update_service_config_schema()
 @api_view(["PATCH"])
 @permission_classes([IsAuthenticated])
 def update_service_config(request: Request, id_name) -> Response:
@@ -246,110 +130,7 @@ def update_service_config(request: Request, id_name) -> Response:
     )
 
 
-@extend_schema(
-    tags=["Images"],
-    parameters=[
-        OpenApiParameter(
-            name="seiyuu_id_name",
-            type=str,
-            location=OpenApiParameter.QUERY,
-            description="Seiyuu id name",
-        ),
-        OpenApiParameter(
-            name="start_date",
-            type=str,
-            location=OpenApiParameter.QUERY,
-            description="Start date in iso format",
-        ),
-        OpenApiParameter(
-            name="end_date",
-            type=str,
-            location=OpenApiParameter.QUERY,
-            description="End date in iso format",
-        ),
-        OpenApiParameter(
-            name="min_likes",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Minimum number of likes",
-        ),
-        OpenApiParameter(
-            name="max_likes",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Maximum number of likes",
-        ),
-        OpenApiParameter(
-            name="min_rts",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Minimum number of retweets",
-        ),
-        OpenApiParameter(
-            name="max_rts",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Maximum number of retweets",
-        ),
-        OpenApiParameter(
-            name="min_posts",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Minimum number of posts",
-        ),
-        OpenApiParameter(
-            name="max_posts",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Maximum number of posts",
-        ),
-        OpenApiParameter(
-            name="tweet_id",
-            type=str,
-            location=OpenApiParameter.QUERY,
-            description="Tweet id",
-        ),
-        OpenApiParameter(
-            name="page",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Page number",
-        ),
-        OpenApiParameter(
-            name="order_by",
-            type=str,
-            enum=["date", "likes", "rts", "posts"],
-            location=OpenApiParameter.QUERY,
-            description="order by, default is date, options: date, likes, rts, posts",
-        ),
-        OpenApiParameter(
-            name="order",
-            type=str,
-            enum=["asc", "desc"],
-            location=OpenApiParameter.QUERY,
-            description="order, default is desc, options: asc, desc",
-        ),
-    ],
-    responses={
-        200: OpenApiResponse(
-            description="Images response",
-            response=inline_serializer(
-                name="ImagesResponse",
-                fields={
-                    "status": serializers.BooleanField(),
-                    "count": serializers.IntegerField(),
-                    "total_pages": serializers.IntegerField(),
-                    "sort_by": serializers.ChoiceField(
-                        choices=["date", "likes", "rts", "posts"]
-                    ),
-                    "order": serializers.ChoiceField(choices=["asc", "desc"]),
-                    "page": serializers.IntegerField(),
-                    "data": MediaSerializer(many=True),
-                },
-            ),
-        ),
-    },
-)
+@list_images_schema()
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def list_images(request: Request) -> Response:
@@ -537,7 +318,7 @@ def list_images(request: Request) -> Response:
 
     try:
         page = int(page)
-    except:
+    except (TypeError, ValueError):
         page = 1
 
     page_size = 20
@@ -564,30 +345,7 @@ def list_images(request: Request) -> Response:
     )
 
 
-@extend_schema(
-    tags=["Images"],
-    parameters=[
-        OpenApiParameter(
-            name="pk",
-            type=int,
-            location=OpenApiParameter.PATH,
-            description="Image id",
-        ),
-    ],
-    responses={
-        200: OpenApiResponse(
-            description="Image Tweets Response",
-            response=inline_serializer(
-                name="ImageTweetsResponse",
-                fields={
-                    "status": serializers.BooleanField(),
-                    "message": serializers.CharField(),
-                    "data": TweetSerializer(many=True),
-                },
-            ),
-        ),
-    },
-)
+@list_image_tweets_schema()
 @api_view(["GET"])
 def list_image_tweets(request: Request, pk) -> Response:
     """
@@ -619,31 +377,7 @@ def list_image_tweets(request: Request, pk) -> Response:
     )
 
 
-@extend_schema(
-    tags=["Images"],
-    parameters=[
-        OpenApiParameter(
-            name="pk",
-            type=int,
-            location=OpenApiParameter.PATH,
-            description="Image id",
-        ),
-    ],
-    request=OpenApiRequest(request=MediaSerializer, encoding="application/json"),
-    responses={
-        200: OpenApiResponse(
-            description="Image Response",
-            response=inline_serializer(
-                name="ImageResponse",
-                fields={
-                    "status": serializers.BooleanField(),
-                    "message": serializers.CharField(),
-                    "data": MediaSerializer(),
-                },
-            ),
-        ),
-    },
-)
+@update_image_weight_schema()
 @api_view(["PATCH"])
 @permission_classes([IsAuthenticated])
 def update_image_weight(request: Request, pk: int) -> Response:
@@ -681,30 +415,7 @@ def update_image_weight(request: Request, pk: int) -> Response:
 ########### local api ############
 
 
-@extend_schema(
-    tags=["Local"],
-    parameters=[
-        OpenApiParameter(
-            name="limit",
-            type=int,
-            location=OpenApiParameter.QUERY,
-            description="Limit number of tweets to return",
-        ),
-    ],
-    responses={
-        200: OpenApiResponse(
-            description="No Data Tweets Response",
-            response=inline_serializer(
-                name="NoDataTweetsResponse",
-                fields={
-                    "id": serializers.IntegerField(),
-                    "post_time": serializers.DateTimeField(),
-                    "seiyuu": serializers.CharField(),
-                },
-            ),
-        ),
-    },
-)
+@get_no_data_tweets_schema()
 @api_view(["GET"])
 def get_no_data_tweets(request):
     """
@@ -719,7 +430,7 @@ def get_no_data_tweets(request):
     seiyuu: seiyuu screen name
 
     """
-    if not request.get_host() in settings.LOCAL_HOSTS:
+    if request.get_host() not in settings.LOCAL_HOSTS:
         return Response(
             {"message": "Not allowed host name"}, status=status.HTTP_403_FORBIDDEN
         )
@@ -742,40 +453,7 @@ def get_no_data_tweets(request):
     return Response(data, status=status.HTTP_200_OK)
 
 
-@extend_schema(
-    tags=["Local"],
-    parameters=[
-        OpenApiParameter(
-            name="pk",
-            type=str,
-            location=OpenApiParameter.PATH,
-            description="Tweet id",
-        ),
-    ],
-    request=OpenApiRequest(
-        request=inline_serializer(
-            name="TweetDataUpdate",
-            fields={
-                "like": serializers.IntegerField(),
-                "rt": serializers.IntegerField(),
-                "quote": serializers.IntegerField(),
-            },
-        ),
-        encoding="application/json",
-    ),
-    responses={
-        200: OpenApiResponse(
-            description="Tweet Response",
-            response=inline_serializer(
-                name="TweetResponse",
-                fields={
-                    "status": serializers.BooleanField(),
-                    "message": serializers.CharField(),
-                },
-            ),
-        ),
-    },
-)
+@update_tweet_data_schema()
 @api_view(["PATCH"])
 def update_tweet_data(request, pk):
     """
@@ -786,7 +464,7 @@ def update_tweet_data(request, pk):
     rt: number of retweets
     quote: number of quotes
     """
-    if not request.get_host() in settings.LOCAL_HOSTS:
+    if request.get_host() not in settings.LOCAL_HOSTS:
         return Response(
             {"message": "Not allowed host name"}, status=status.HTTP_403_FORBIDDEN
         )
@@ -820,31 +498,7 @@ def update_tweet_data(request, pk):
     )
 
 
-@extend_schema(
-    tags=["Local"],
-    request=OpenApiRequest(
-        request=inline_serializer(
-            name="FollowersData",
-            fields={
-                "seiyuu": serializers.CharField(),
-                "followers": serializers.CharField(),
-            },
-        ),
-        encoding="application/json",
-    ),
-    responses={
-        200: OpenApiResponse(
-            description="Followers Response",
-            response=inline_serializer(
-                name="FollowersResponse",
-                fields={
-                    "status": serializers.BooleanField(),
-                    "message": serializers.CharField(),
-                },
-            ),
-        ),
-    },
-)
+@set_followers_schema()
 @api_view(["POST"])
 def set_followers(request):
     """
@@ -854,7 +508,7 @@ def set_followers(request):
     seiyuu: seiyuu screen_name
     followers: number of followers
     """
-    if not request.get_host() in settings.LOCAL_HOSTS:
+    if request.get_host() not in settings.LOCAL_HOSTS:
         return Response(
             {"status": False, "message": "Not allowed host name"},
             status=status.HTTP_403_FORBIDDEN,

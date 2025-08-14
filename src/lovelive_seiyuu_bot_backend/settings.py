@@ -35,6 +35,10 @@ required_env_vars = [
     "POSTGRES_PASSWORD",
     "POSTGRES_HOST",
     "POSTGRES_PORT",
+    "ES_HOST",
+    "ES_CA_CERT",
+    "ES_CLIENT_CERT",
+    "ES_CLIENT_KEY",
 ]
 
 missing_env_vars = [

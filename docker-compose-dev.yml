@@ -12,6 +12,88 @@ services:
     networks:
       - seiyuu-bot-network
 
+  seiyuu-bot-elastic:
+    user: "1000"
+    container_name: seiyuu-bot-elastic
+    hostname: seiyuu-bot-elastic
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.17.4
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+    volumes:
+      - ./data/elasticsearch/certs:/usr/share/elasticsearch/config/certs
+      - ./data/elasticsearch/data:/usr/share/elasticsearch/data
+      - seiyuu_bot_es_config:/usr/share/elasticsearch/config
+    env_file:
+      - .env
+    ports:
+      - ${ES_PORT}:9200
+    environment:
+      - node.name=seiyuu-bot-elastic
+      - cluster.name=seiyuu-bot-elastic
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - cluster.initial_master_nodes=seiyuu-bot-elastic
+      - bootstrap.memory_lock=true
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/seiyuu-bot-elastic/seiyuu-bot-elastic.key
+      - xpack.security.http.ssl.certificate=certs/seiyuu-bot-elastic/seiyuu-bot-elastic.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.http.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/seiyuu-bot-elastic/seiyuu-bot-elastic.key
+      - xpack.security.transport.ssl.certificate=certs/seiyuu-bot-elastic/seiyuu-bot-elastic.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.license.self_generated.type=basic
+      - http.cors.enabled=true
+      - http.cors.allow-origin="*"
+      - http.cors.allow-methods=OPTIONS, HEAD, GET, POST, PUT, DELETE
+      - http.cors.allow-headers=Authorization,X-Requested-With,Content-Length,Content-Type
+    networks:
+      - seiyuu-bot-network
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    deploy:
+      resources:
+        limits:
+          cpus: 2
+          memory: 4096M
+        reservations:
+          cpus: 0.5
+          memory: 2048M
+
+    entrypoint:
+      - /bin/tini
+      - --
+      - bash
+      - -c
+      - >
+        chown -R root:root /usr/share/elasticsearch/config/certs;
+        find /usr/share/elasticsearch/config/certs -type d -exec chmod 750 {} \;;
+        find /usr/share/elasticsearch/config/certs -type f -exec chmod 640 {} \;;
+        exec /usr/local/bin/docker-entrypoint.sh;
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+
 networks:
   seiyuu-bot-network:
     driver: bridge
+
+volumes:
+  seiyuu_bot_es_config:
+    driver: local

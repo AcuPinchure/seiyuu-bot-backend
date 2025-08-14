@@ -1,7 +1,9 @@
 import os
 from django.conf import settings
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 
 from drf_spectacular.utils import (
@@ -11,6 +13,18 @@ from drf_spectacular.utils import (
     OpenApiResponse,
     inline_serializer,
     OpenApiParameter,
+)
+
+from .serializers import (
+    ImportLogSerializer,
+    GetLogQuerySerializer,
+    ListLogQuerySerializer,
+)
+from .elasticsearch_client import es_logs_client
+from .swagger import (
+    import_log_schema,
+    get_log_schema,
+    list_log_schema,
 )
 
 
@@ -212,3 +226,113 @@ def serve_crawler_log_file_or_directory(request, path=""):
         log_path = settings.CRAWLER_LOG_ROOT
 
     return load_log_file_or_directory(log_path)
+
+
+@get_log_schema()
+@api_view(["GET"])
+def get_log(request: Request, pk: str) -> Response:
+    """
+    Get a specific log entry
+    """
+    serializer = GetLogQuerySerializer(data=request.query_params)
+    serializer.is_valid(raise_exception=True)
+
+    log_type = serializer.validated_data["type"]
+
+    try:
+        log_data = es_logs_client.get_log(log_type, str(pk))
+
+        if log_data is None:
+            return Response(
+                {"status": False, "message": "Log not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(log_data, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {"status": False, "message": f"Failed to get log: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@list_log_schema()
+@api_view(["GET"])
+def list_log(request: Request) -> Response:
+    """
+    List log entries with filtering
+    """
+    serializer = ListLogQuerySerializer(data=request.query_params)
+    serializer.is_valid(raise_exception=True)
+
+    log_type = serializer.validated_data["type"]
+    min_date = serializer.validated_data.get("min_date")
+    max_date = serializer.validated_data.get("max_date")
+    keyword = serializer.validated_data.get("keyword")
+    page = serializer.validated_data.get("page", 1)
+
+    try:
+        # Validate page limit
+        if page > 50:
+            return Response(
+                {"status": False, "message": "Page number cannot exceed 50"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Convert date objects to strings if provided
+        min_date_str = min_date.strftime("%Y-%m-%d") if min_date else None
+        max_date_str = max_date.strftime("%Y-%m-%d") if max_date else None
+
+        logs = es_logs_client.list_logs(
+            log_type=log_type,
+            page=page,
+            keyword=keyword,
+            min_date=min_date_str,
+            max_date=max_date_str,
+        )
+
+        return Response(logs, status=status.HTTP_200_OK)
+    except ValueError as e:
+        return Response(
+            {"status": False, "message": str(e)},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    except Exception as e:
+        return Response(
+            {"status": False, "message": f"Failed to list logs: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@import_log_schema()
+@api_view(["POST"])
+def import_log(request):
+    """
+    Import log entry, API for local only
+    """
+    if request.get_host() not in settings.LOCAL_HOSTS:
+        return Response(
+            {"status": False, "message": "Not allowed host name"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    serializer = ImportLogSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    try:
+        log_type = serializer.validated_data["type"]
+        log_time = serializer.validated_data["log_time"]
+        file_name = serializer.validated_data["file_name"]
+        content = serializer.validated_data["content"]
+
+        doc_id = es_logs_client.create_log(log_type, log_time, file_name, content)
+
+        return Response(
+            {"status": True, "message": f"Log created successfully with ID: {doc_id}"},
+            status=status.HTTP_200_OK,
+        )
+    except Exception as e:
+        return Response(
+            {"status": False, "message": f"Failed to create log: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )

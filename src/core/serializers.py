@@ -1,6 +1,7 @@
 from .models import Seiyuu, Media, Followers, Tweet
 from rest_framework import serializers
 from django.db.models import Sum
+from datetime import datetime
 
 
 class SeiyuuSerializer(serializers.ModelSerializer):
@@ -126,3 +127,4 @@ class TweetSerializer(serializers.ModelSerializer):
             "quote",
             "followers",
         ]
+
