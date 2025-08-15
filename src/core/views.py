@@ -86,7 +86,11 @@ def get_service_config(request: Request) -> Response:
     """
     load status of all seiyuu
     """
-    seiyuu_query = Seiyuu.objects.filter(hidden=False).order_by("id")
+
+    if request.user.is_authenticated:
+        seiyuu_query = Seiyuu.objects.all().order_by("id")
+    else:
+        seiyuu_query = Seiyuu.objects.filter(hidden=False).order_by("id")
 
     return Response(
         {"status": True, "data": SeiyuuSerializer(seiyuu_query, many=True).data},
