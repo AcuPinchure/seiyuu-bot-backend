@@ -87,7 +87,7 @@ def get_service_config(request: Request) -> Response:
     load status of all seiyuu
     """
 
-    if request.user.is_authenticated:
+    if request.user.is_authenticated or request.get_host() in settings.LOCAL_HOSTS:
         seiyuu_query = Seiyuu.objects.all().order_by("id")
     else:
         seiyuu_query = Seiyuu.objects.filter(hidden=False).order_by("id")
