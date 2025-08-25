@@ -39,14 +39,24 @@ def get_stats_from_query_options(
     avg_likes = tweet_query.aggregate(avg_likes=Avg("like"))["avg_likes"] or 0
     max_likes = map(
         lambda number: str(number),
-        tweet_query.order_by("-like").values_list("id", flat=True)[:10],
+        tweet_query.filter(
+            like__isnull=False,
+            rt__isnull=False,
+        )
+        .order_by("-like")
+        .values_list("id", flat=True)[:10],
     )
 
     rt_count = tweet_query.aggregate(sum_rt=Sum("rt"))["sum_rt"] or 0
     avg_rts = tweet_query.aggregate(avg_rt=Avg("rt"))["avg_rt"] or 0
     max_rts = map(
         lambda number: str(number),
-        tweet_query.order_by("-rt").values_list("id", flat=True)[:10],
+        tweet_query.filter(
+            like__isnull=False,
+            rt__isnull=False,
+        )
+        .order_by("-rt")
+        .values_list("id", flat=True)[:10],
     )
 
     return {
