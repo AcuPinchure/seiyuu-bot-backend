@@ -9,10 +9,13 @@ class Command(BaseCommand):
 
     def handle(self, **options):
 
-        for the_seiyuu_instance in Seiyuu.objects.all():
+        for the_seiyuu_instance in Seiyuu.objects.filter(hidden=False):
             self.import_image_from_queue(the_seiyuu_instance)
 
     def import_image_from_queue(self, seiyuu_instance: Seiyuu):
+        self.stdout.write(
+            f"[{seiyuu_instance.id_name}] Folder: {seiyuu_instance.image_folder}"
+        )
         imgs_path = os.path.join(
             settings.BASE_DIR, "data", "media", "Library", seiyuu_instance.image_folder
         )
