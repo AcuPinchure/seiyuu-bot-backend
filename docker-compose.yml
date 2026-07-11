@@ -3,6 +3,7 @@ version: "3.8"
 services:
   seiyuu-bot-backend:
     build: .
+    restart: unless-stopped
     ports:
       - "127.0.0.1:8000:8000" # Only expose to localhost for nginx proxy
     volumes:
@@ -21,6 +22,7 @@ services:
 
   seiyuu-bot-postgres:
     image: postgres:15
+    restart: unless-stopped
     ports:
       - "${POSTGRES_PORT}:5432"
     volumes:
@@ -32,6 +34,7 @@ services:
 
   seiyuu-bot-elastic:
     user: "1000"
+    restart: unless-stopped
     container_name: seiyuu-bot-elastic
     hostname: seiyuu-bot-elastic
     image: docker.elastic.co/elasticsearch/elasticsearch:8.17.4
@@ -82,10 +85,10 @@ services:
       resources:
         limits:
           cpus: 2
-          memory: 4096M
+          memory: 8G
         reservations:
           cpus: 0.5
-          memory: 2048M
+          memory: 4G
 
     entrypoint:
       - /bin/tini
