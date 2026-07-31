@@ -1,39 +1,40 @@
+import math
+from datetime import timedelta
+from random import choices
+
 from django.conf import settings
+from django.db.models import Max
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Avg, Count, Sum, Max
 
-import math
-
-from django.utils import timezone
-from datetime import datetime, timedelta
-
-from core.paginators import StandardResultsSetPagination
-
-from .models import Seiyuu, Tweet, Followers, Media
+from .models import Followers, Media, Seiyuu, Tweet
 from .serializers import (
-    SeiyuuSerializer,
     MediaSerializer,
+    SeiyuuSerializer,
     StatsQuerySerializer,
     TweetSerializer,
 )
-from .utils import get_stats_from_query_options, get_followers_from_query_options
 from .swagger import (
-    get_status_schema,
+    create_tweet_schema,
+    get_auth_token_schema,
     get_followers_schema,
-    get_service_config_schema,
-    update_service_config_schema,
-    list_images_schema,
-    list_image_tweets_schema,
-    update_image_weight_schema,
     get_no_data_tweets_schema,
-    update_tweet_data_schema,
+    get_random_media_schema,
+    get_service_config_schema,
+    get_status_schema,
+    list_image_tweets_schema,
+    list_images_schema,
     set_followers_schema,
+    update_image_weight_schema,
+    update_service_config_schema,
+    update_tweet_data_schema,
 )
-
+from .utils import get_followers_from_query_options, get_stats_from_query_options
 
 # Create your views here.
 
@@ -529,5 +530,166 @@ def set_followers(request):
 
     return Response(
         {"status": True, "message": "Object create successfully"},
+        status=status.HTTP_200_OK,
+    )
+
+
+@get_auth_token_schema()
+@api_view(["GET"])
+def get_auth_token(request: Request, pk: int) -> Response:
+    """
+    get the auth token of a seiyuu account, api for local only
+
+    [path params]
+    pk: seiyuu id
+
+    [return]
+    id: seiyuu id
+    id_name: seiyuu short name
+    screen_name: bot account screen name
+    auth_token: the auth token in cookie when login as the account
+    """
+    if request.get_host() not in settings.LOCAL_HOSTS:
+        return Response(
+            {"status": False, "message": "Not allowed host name"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    try:
+        the_seiyuu = Seiyuu.objects.get(pk=pk)
+    except Seiyuu.DoesNotExist:
+        return Response(
+            {"status": False, "message": "Seiyuu not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    return Response(
+        {
+            "status": True,
+            "message": "",
+            "data": {
+                "id": the_seiyuu.id,
+                "id_name": the_seiyuu.id_name,
+                "screen_name": the_seiyuu.screen_name,
+                "auth_token": the_seiyuu.auth_token,
+            },
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@get_random_media_schema()
+@api_view(["GET"])
+def get_random_media(request: Request, pk: int) -> Response:
+    """
+    pick a random media of a seiyuu by weight, api for local only
+
+    [path params]
+    pk: seiyuu id
+    """
+    if request.get_host() not in settings.LOCAL_HOSTS:
+        return Response(
+            {"status": False, "message": "Not allowed host name"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    try:
+        the_seiyuu = Seiyuu.objects.get(pk=pk)
+    except Seiyuu.DoesNotExist:
+        return Response(
+            {"status": False, "message": "Seiyuu not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    media_q = Media.objects.filter(seiyuu=the_seiyuu)
+    media_pks = media_q.values_list("pk", flat=True)
+    media_weights = media_q.values_list("weight", flat=True)
+
+    if not media_pks or sum(media_weights) <= 0:
+        return Response(
+            {"status": False, "message": "No media found", "data": None},
+            status=status.HTTP_200_OK,
+        )
+
+    random_pk = choices(media_pks, media_weights)[0]
+    random_media = media_q.get(pk=random_pk)
+
+    return Response(
+        {
+            "status": True,
+            "message": "",
+            "data": MediaSerializer(random_media).data,
+        },
+        status=status.HTTP_200_OK,
+    )
+
+
+@create_tweet_schema()
+@api_view(["POST"])
+def create_tweet(request: Request) -> Response:
+    """
+    create a tweet record after posting, api for local only
+
+    [body params]
+    id: tweet id
+    post_time: tweet post time in iso format, default is now
+    media: media id
+    """
+    if request.get_host() not in settings.LOCAL_HOSTS:
+        return Response(
+            {"status": False, "message": "Not allowed host name"},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    data = request.data
+
+    tweet_id = data.get("id")
+
+    if not tweet_id:
+        return Response(
+            {"status": False, "message": "Tweet id is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if Tweet.objects.filter(pk=tweet_id).exists():
+        return Response(
+            {"status": False, "message": "Tweet already exists"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        the_media = Media.objects.get(pk=data.get("media"))
+    except (Media.DoesNotExist, TypeError, ValueError):
+        return Response(
+            {"status": False, "message": "Media not found"},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    post_time = data.get("post_time")
+
+    if post_time:
+        post_time = parse_datetime(post_time) if isinstance(post_time, str) else None
+        if not post_time:
+            return Response(
+                {"status": False, "message": "Invalid post_time"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if timezone.is_naive(post_time):
+            post_time = timezone.make_aware(post_time)
+    else:
+        post_time = timezone.now()
+
+    the_tweet = Tweet.objects.create(
+        id=tweet_id,
+        post_time=post_time,
+        media=the_media,
+    )
+
+    return Response(
+        {
+            "status": True,
+            "message": "Object create successfully",
+            "data": TweetSerializer(the_tweet).data,
+        },
         status=status.HTTP_200_OK,
     )

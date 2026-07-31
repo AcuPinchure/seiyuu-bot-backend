@@ -1,6 +1,6 @@
 from django.urls import include, path
-from . import views
 
+from . import views
 
 service_config_patterns = [
     path("", views.get_service_config, name="get_service_config"),
@@ -25,6 +25,9 @@ local_patterns = [
         "update_tweet_data/<str:pk>/", views.update_tweet_data, name="update_tweet_data"
     ),
     path("set_followers/", views.set_followers, name="set_followers"),
+    path("get_auth_token/<int:pk>/", views.get_auth_token, name="get_auth_token"),
+    path("get_random_media/<int:pk>/", views.get_random_media, name="get_random_media"),
+    path("create_tweet/", views.create_tweet, name="create_tweet"),
 ]
 
 

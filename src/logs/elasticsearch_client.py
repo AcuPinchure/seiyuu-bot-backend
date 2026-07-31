@@ -1,9 +1,10 @@
 import hashlib
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Any
-from elasticsearch import Elasticsearch
+from typing import Any
+
 from django.conf import settings
+from elasticsearch import Elasticsearch
 
 
 class LogsElasticsearchClient:
@@ -15,25 +16,17 @@ class LogsElasticsearchClient:
 
     def __init__(self):
         # Get certificate paths from environment variables
-        ca_cert_path = os.path.join(settings.BASE_DIR, "data", os.getenv("ES_CA_CERT"))
-        client_cert_path = os.path.join(
-            settings.BASE_DIR, "data", os.getenv("ES_CLIENT_CERT")
-        )
-        client_key_path = os.path.join(
-            settings.BASE_DIR, "data", os.getenv("ES_CLIENT_KEY")
-        )
+        ca_cert_path = os.path.join(settings.BASE_DIR, "data", settings.ES_CA_CERT)
 
         # Initialize Elasticsearch client with SSL
         self.client = Elasticsearch(
-            [os.getenv("ES_HOST")],
+            [settings.ES_HOST],
             ca_certs=ca_cert_path,
-            client_cert=client_cert_path,
-            client_key=client_key_path,
-            basic_auth=("elastic", os.getenv("ELASTIC_PASSWORD")),
+            basic_auth=("elastic", settings.ELASTIC_PASSWORD),
             verify_certs=True,
         )
 
-    def _convert_datetime_to_es_datetime(self, dt: datetime) -> Optional[str]:
+    def _convert_datetime_to_es_datetime(self, dt: datetime) -> str | None:
         """
         Convert datetime object to Elasticsearch datetime string format
         """
@@ -41,7 +34,7 @@ class LogsElasticsearchClient:
             return dt.strftime("%Y-%m-%d %H:%M:%S")
         return None
 
-    def _convert_es_datetime_to_datetime(self, es_datetime: str) -> Optional[datetime]:
+    def _convert_es_datetime_to_datetime(self, es_datetime: str) -> datetime | None:
         """
         Convert Elasticsearch datetime string to datetime object
         """
@@ -89,7 +82,7 @@ class LogsElasticsearchClient:
 
         return doc_id
 
-    def get_log(self, log_type: str, doc_id: str) -> Optional[Dict[str, Any]]:
+    def get_log(self, log_type: str, doc_id: str) -> dict[str, Any] | None:
         """
         Get a log document by ID
 
@@ -120,10 +113,10 @@ class LogsElasticsearchClient:
         self,
         log_type: str,
         page: int = 1,
-        keyword: Optional[str] = None,
-        min_date: Optional[str] = None,
-        max_date: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        keyword: str | None = None,
+        min_date: str | None = None,
+        max_date: str | None = None,
+    ) -> list[dict[str, Any]]:
         """
         List log documents with optional filtering and highlighting
 
@@ -176,7 +169,11 @@ class LogsElasticsearchClient:
             "from": from_offset,
             "size": size,
             "sort": [{"log_time": {"order": "desc"}}],
-            "_source": ["log_time", "file_name", "content"],  # Include content in response
+            "_source": [
+                "log_time",
+                "file_name",
+                "content",
+            ],  # Include content in response
         }
 
         # Add highlight configuration if keyword exists
@@ -194,7 +191,7 @@ class LogsElasticsearchClient:
                         "number_of_fragments": 1,
                         "pre_tags": ["<mark>"],
                         "post_tags": ["</mark>"],
-                    }
+                    },
                 }
             }
 
@@ -209,7 +206,7 @@ class LogsElasticsearchClient:
             results = []
             for hit in response["hits"]["hits"]:
                 source = hit["_source"]
-                
+
                 # Extract preview
                 preview = ""
                 if keyword and "highlight" in hit:
@@ -226,7 +223,7 @@ class LogsElasticsearchClient:
                         preview = content[:100]
                         if len(content) > 100:
                             preview += "..."
-                
+
                 results.append(
                     {
                         "id": hit["_id"],

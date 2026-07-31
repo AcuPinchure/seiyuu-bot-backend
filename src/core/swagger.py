@@ -1,17 +1,15 @@
 from drf_spectacular.utils import (
-    extend_schema,
-    OpenApiExample,
+    OpenApiParameter,
     OpenApiRequest,
     OpenApiResponse,
+    extend_schema,
     inline_serializer,
-    OpenApiParameter,
 )
-
 from rest_framework import serializers
+
 from .serializers import (
-    SeiyuuSerializer,
     MediaSerializer,
-    StatsQuerySerializer,
+    SeiyuuSerializer,
     TweetSerializer,
 )
 
@@ -371,6 +369,98 @@ def update_tweet_data_schema():
                     fields={
                         "status": serializers.BooleanField(),
                         "message": serializers.CharField(),
+                    },
+                ),
+            ),
+        },
+    )
+
+
+def get_auth_token_schema():
+    return extend_schema(
+        tags=["Local"],
+        parameters=[
+            OpenApiParameter(
+                name="pk",
+                type=int,
+                location=OpenApiParameter.PATH,
+                description="Seiyuu id",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="Auth Token Response",
+                response=inline_serializer(
+                    name="AuthTokenResponse",
+                    fields={
+                        "status": serializers.BooleanField(),
+                        "message": serializers.CharField(),
+                        "data": inline_serializer(
+                            name="AuthToken",
+                            fields={
+                                "id": serializers.IntegerField(),
+                                "id_name": serializers.CharField(),
+                                "screen_name": serializers.CharField(),
+                                "auth_token": serializers.CharField(),
+                            },
+                        ),
+                    },
+                ),
+            ),
+        },
+    )
+
+
+def get_random_media_schema():
+    return extend_schema(
+        tags=["Local"],
+        parameters=[
+            OpenApiParameter(
+                name="pk",
+                type=int,
+                location=OpenApiParameter.PATH,
+                description="Seiyuu id",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="Random Media Response",
+                response=inline_serializer(
+                    name="RandomMediaResponse",
+                    fields={
+                        "status": serializers.BooleanField(),
+                        "message": serializers.CharField(),
+                        "data": MediaSerializer(),
+                    },
+                ),
+            ),
+        },
+    )
+
+
+def create_tweet_schema():
+    return extend_schema(
+        tags=["Local"],
+        request=OpenApiRequest(
+            request=inline_serializer(
+                name="PostData",
+                fields={
+                    "id": serializers.CharField(),
+                    "post_time": serializers.DateTimeField(required=False),
+                    "media": serializers.IntegerField(),
+                },
+            ),
+            encoding="application/json",
+        ),
+        responses={
+            200: OpenApiResponse(
+                description="Create Post Response",
+                response=inline_serializer(
+                    name="CreatePostResponse",
+                    fields={
+                        "status": serializers.BooleanField(),
+                        "message": serializers.CharField(),
+                        "data": TweetSerializer(),
                     },
                 ),
             ),

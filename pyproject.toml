@@ -20,4 +20,5 @@ dependencies = [
     "psycopg2>=2.9.10",
     "whitenoise>=6.9.0",
     "elasticsearch==8.17.0",
+    "xclienttransaction>=1.0.3",
 ]

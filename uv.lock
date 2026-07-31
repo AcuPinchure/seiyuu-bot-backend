@@ -24,6 +24,19 @@ wheels = [
 ]
 
 [[package]]
+name = "beautifulsoup4"
+version = "4.15.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "soupsieve" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/43/65/318323f98dbee45d42dff61d8f047181bc6f2268a9068cfad035a46be5af/beautifulsoup4-4.15.0.tar.gz", hash = "sha256:288e3ca7d54b06f2ac191970bc275c1939cb46d450b255bf6718b04aa37ab4f7", size = 632571 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/88/c6/92fcd42f1ba33e1184263f25bfabf3d27c383410470f169e4b8163bf9c17/beautifulsoup4-4.15.0-py3-none-any.whl", hash = "sha256:d6f88de62e1d4e38ecb1077eb9724cd0eff29d2a08ca16a401e9b9e93f117cf9", size = 109924 },
+]
+
+[[package]]
 name = "certifi"
 version = "2025.8.3"
 source = { registry = "https://pypi.org/simple" }
@@ -249,6 +262,7 @@ dependencies = [
     { name = "requests" },
     { name = "tweepy" },
     { name = "whitenoise" },
+    { name = "xclienttransaction" },
 ]
 
 [package.metadata]
@@ -264,6 +278,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.32.3,<3.0" },
     { name = "tweepy", specifier = ">=4.14.0,<5.0" },
     { name = "whitenoise", specifier = ">=6.9.0" },
+    { name = "xclienttransaction", specifier = ">=1.0.3" },
 ]
 
 [[package]]
@@ -530,6 +545,15 @@ wheels = [
 ]
 
 [[package]]
+name = "soupsieve"
+version = "2.9.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d9/38/e12680bbe6b4f8f3d17adcaf38d26850aa756c85cf4a80e79fc12a018fe8/soupsieve-2.9.1.tar.gz", hash = "sha256:c33e6605bbc71dd628b00c632d58ae607c22bade247e52553928f83bbb75b4ba", size = 122261 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0f/2c/437fe806897c2d6cfdc3ee43a18da8bf8e568530a4ae9bac781541ca9896/soupsieve-2.9.1-py3-none-any.whl", hash = "sha256:4f4477399246b7a0c720a88ca2454b11cd6bb9ae4c9d170140786e916776c14c", size = 37404 },
+]
+
+[[package]]
 name = "sqlparse"
 version = "0.5.3"
 source = { registry = "https://pypi.org/simple" }
@@ -595,4 +619,16 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/b9/cf/c15c2f21aee6b22a9f6fc9be3f7e477e2442ec22848273db7f4eb73d6162/whitenoise-6.9.0.tar.gz", hash = "sha256:8c4a7c9d384694990c26f3047e118c691557481d624f069b7f7752a2f735d609", size = 25920 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/64/b2/2ce9263149fbde9701d352bda24ea1362c154e196d2fda2201f18fc585d7/whitenoise-6.9.0-py3-none-any.whl", hash = "sha256:c8a489049b7ee9889617bb4c274a153f3d979e8f51d2efd0f5b403caf41c57df", size = 20161 },
+]
+
+[[package]]
+name = "xclienttransaction"
+version = "1.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "beautifulsoup4" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1b/11/6f5a55df6d464fe6f839fe96c3863fa2338005ed8e83e89b0a9db5716b5a/xclienttransaction-1.0.3.tar.gz", hash = "sha256:1eeb5d48cec6a224189bbd8a6021c40486fa3aff650478672bccf82b3436cedc", size = 10609 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/a1/be735112ebe49916065e6f80017b93e92fc8880789c3f4f17380db7f531a/xclienttransaction-1.0.3-py3-none-any.whl", hash = "sha256:f73dd2a4b6856f98fa45f0cd26c9a0fdc0b2ceba0e79b5523cdf8aac7efc59fe", size = 10778 },
 ]

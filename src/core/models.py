@@ -34,6 +34,13 @@ class Seiyuu(models.Model):
         help_text="If the seiyuu should be hidden from website", default=False
     )
 
+    auth_token = models.CharField(
+        help_text="The auth token in cookie when login as the account",
+        max_length=1000,
+        blank=True,
+        null=True,
+    )
+
     def __str__(self):
         return f"{self.name} @{self.screen_name}"
 

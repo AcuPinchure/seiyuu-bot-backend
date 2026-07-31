@@ -10,12 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-from pathlib import Path
-from datetime import timedelta
-from dotenv import load_dotenv
 import os
-from corsheaders.defaults import default_headers
+from datetime import timedelta
+from pathlib import Path
 
+from corsheaders.defaults import default_headers
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -37,8 +37,7 @@ required_env_vars = [
     "POSTGRES_PORT",
     "ES_HOST",
     "ES_CA_CERT",
-    "ES_CLIENT_CERT",
-    "ES_CLIENT_KEY",
+    "ELASTIC_PASSWORD",
 ]
 
 missing_env_vars = [
@@ -136,6 +135,10 @@ DATABASES = {
         "PORT": os.getenv("POSTGRES_PORT"),
     }
 }
+
+ES_CA_CERT = os.getenv("ES_CA_CERT")
+ES_HOST = os.getenv("ES_HOST")
+ELASTIC_PASSWORD = os.getenv("ELASTIC_PASSWORD")
 
 
 # Password validation

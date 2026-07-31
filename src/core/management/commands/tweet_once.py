@@ -1,12 +1,14 @@
-from ._post_handler import auth_api, mediaUpload
 import os
-from django.utils.timezone import now
-from random import choices
-from django.core.management.base import BaseCommand
-from pathlib import Path
-from core.models import Seiyuu, Tweet, Media
 from datetime import timedelta
+from random import choices
+
 from django.conf import settings
+from django.core.management.base import BaseCommand
+from django.utils.timezone import now
+
+from core.models import Media, Seiyuu, Tweet
+
+from ._post_handler import auth_api, mediaUpload
 
 
 class Command(BaseCommand):
