@@ -545,8 +545,12 @@ def get_auth_token(request: Request, pk: int) -> Response:
 
     [return]
     id: seiyuu id
+    name: seiyuu name
     id_name: seiyuu short name
     screen_name: bot account screen name
+    activated: if the bot is activated
+    interval: interval between tweets in hours
+    last_post: post time of the latest tweet in iso format
     auth_token: the auth token in cookie when login as the account
     """
     if request.get_host() not in settings.LOCAL_HOSTS:
@@ -568,9 +572,7 @@ def get_auth_token(request: Request, pk: int) -> Response:
             "status": True,
             "message": "",
             "data": {
-                "id": the_seiyuu.id,
-                "id_name": the_seiyuu.id_name,
-                "screen_name": the_seiyuu.screen_name,
+                **SeiyuuSerializer(the_seiyuu).data,
                 "auth_token": the_seiyuu.auth_token,
             },
         },

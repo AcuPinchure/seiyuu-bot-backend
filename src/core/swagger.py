@@ -399,8 +399,12 @@ def get_auth_token_schema():
                             name="AuthToken",
                             fields={
                                 "id": serializers.IntegerField(),
-                                "id_name": serializers.CharField(),
+                                "name": serializers.CharField(),
                                 "screen_name": serializers.CharField(),
+                                "id_name": serializers.CharField(),
+                                "activated": serializers.BooleanField(),
+                                "interval": serializers.IntegerField(),
+                                "last_post": serializers.CharField(),
                                 "auth_token": serializers.CharField(),
                             },
                         ),
