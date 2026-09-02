@@ -262,7 +262,7 @@ def list_images(request: Request) -> Response:
             (
                 SELECT
                     media_id,
-                    MAX(core_tweet."like") AS count
+                    COALESCE(MAX(core_tweet."like"), 0) AS count
                 FROM core_tweet
                 GROUP BY media_id
             ) AS tweet_like_count ON core_media.id = tweet_like_count.media_id
@@ -270,7 +270,7 @@ def list_images(request: Request) -> Response:
             (
                 SELECT
                     media_id,
-                    MAX(core_tweet.rt) AS count
+                    COALESCE(MAX(core_tweet.rt), 0) AS count
                 FROM core_tweet
                 GROUP BY media_id
             ) AS tweet_rt_count ON core_media.id = tweet_rt_count.media_id
@@ -299,7 +299,7 @@ def list_images(request: Request) -> Response:
 
     raw_query_command_with_order = f"""
         {base_raw_query_command}
-        ORDER BY {sort_by} {order.upper()}
+        ORDER BY {sort_by} {order.upper()} NULLS LAST
     """
 
     image_query = Media.objects.raw(raw_query_command_with_order)
